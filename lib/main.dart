@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+Future<void> main() async {
+  await Supabase.initialize(
+    url: 'https://cbnmrnxtflyknxsvjwfm.supabase.co',
+    // ignore: deprecated_member_use
+    anonKey: 'sb_publishable_aIfcbDn31qPEfDh-ibY1ZQ_sUwIsLwq',
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -28,7 +35,7 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
