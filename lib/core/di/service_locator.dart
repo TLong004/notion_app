@@ -13,6 +13,14 @@ import 'package:notion_app/feature/auth/domain/usecases/register_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/send_otp_usercase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:notion_app/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:notion_app/feature/page/data/datasources/page_remote_datasource.dart';
+import 'package:notion_app/feature/page/data/repositories/page_repository_impl.dart';
+import 'package:notion_app/feature/page/domain/repositories/page_repository.dart';
+import 'package:notion_app/feature/page/domain/usecases/create_page_usecase.dart';
+import 'package:notion_app/feature/page/domain/usecases/get_page_usecase.dart';
+import 'package:notion_app/feature/page/domain/usecases/rename_page_usecase.dart';
+import 'package:notion_app/feature/page/domain/usecases/trash_page_usecase.dart';
+import 'package:notion_app/feature/page/presentation/bloc/page_list_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -75,6 +83,40 @@ Future<void> setupServiceLocator() async {
       checkSignInStatusUseCase: getIt<AuthCheckSignInStatusUseCase>(),
       sendOtpUseCase: getIt<SendOtpUseCase>(),
       verifyOtpUseCase: getIt<VerifyOtpUseCase>(),
+    ),
+  );
+
+  // Page - Data sources
+  getIt.registerSingleton<PageRemoteDataSource>(
+    PageRemoteDataSourceImpl(supabaseClient),
+  );
+
+  // Page - Repositories
+  getIt.registerSingleton<PageRepository>(
+    PageRepositoryImpl(getIt<PageRemoteDataSource>()),
+  );
+
+  // Page - Use cases
+  getIt.registerSingleton<PageGetPagesUseCase>(
+    PageGetPagesUseCase(getIt<PageRepository>()),
+  );
+  getIt.registerSingleton<CreatePageUseCase>(
+    CreatePageUseCase(getIt<PageRepository>()),
+  );
+  getIt.registerSingleton<RenamePageUseCase>(
+    RenamePageUseCase(getIt<PageRepository>()),
+  );
+  getIt.registerSingleton<TrashPageUseCase>(
+    TrashPageUseCase(getIt<PageRepository>()),
+  );
+
+  // Page - BLoCs
+  getIt.registerSingleton<PageListBloc>(
+    PageListBloc(
+      getPagesUseCase: getIt<PageGetPagesUseCase>(),
+      createPageUseCase: getIt<CreatePageUseCase>(),
+      renamePageUseCase: getIt<RenamePageUseCase>(),
+      trashPageUseCase: getIt<TrashPageUseCase>(),
     ),
   );
 }

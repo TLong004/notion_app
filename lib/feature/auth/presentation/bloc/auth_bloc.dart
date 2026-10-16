@@ -123,6 +123,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       CacheFailure() => 'Lỗi lưu trữ, vui lòng thử lại',
       EmptyFailure() => 'Dữ liệu trống, vui lòng thử lại',
       InvalidOtpFailure() => 'Mã không đúng hoặc đã hết hạn. Vui lòng nhập lại hoặc gửi mã mới',
+      (_) => "",
     };
   }
 }

@@ -22,3 +22,11 @@ class InvalidEmailFailure extends Failure {}
 class InvalidPasswordFailure extends Failure {}
 
 class InvalidOtpFailure extends Failure {}
+
+class ValidationFailure extends Failure {
+  final String message;
+  ValidationFailure({this.message = 'Validation failed'});
+
+  @override
+  List<Object> get props => [message];
+}
