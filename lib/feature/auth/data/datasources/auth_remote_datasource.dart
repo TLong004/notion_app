@@ -11,6 +11,7 @@ sealed class AuthRemoteDataSource {
   Future<UserModel> login(LoginModel model);
   Future<void> logout();
   Future<UserModel> register(RegisterModel model);
+  Future<void> sendOtp(String email);
   Future<UserModel> verifyOtp({required String email, required String otpCode});
 }
 
@@ -81,27 +82,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String otpCode,
   }) async {
     try {
-      final otpResponse = await _supabaseClient
-          .from('otp_codes')
-          .select()
-          .eq('email', email)
-          .eq('otp_code', otpCode)
-          .eq('used', false)
-          .single();
+      final response = await _supabaseClient.auth.verifyOTP(
+        email: email,
+        token: otpCode,
+        type: OtpType.email,
+      );
 
-      final expiresAt = DateTime.parse(otpResponse['expires_at'] as String);
-      if (DateTime.now().isAfter(expiresAt)) {
-        throw ServerException();
+      if (response.user == null) {
+        throw EmptyException();
       }
-
-      await _supabaseClient
-          .from('otp_codes')
-          .update({'used': true})
-          .eq('id', otpResponse['id']);
 
       final user = await _getUserByEmail(email);
       return user;
+    } on EmptyException {
+      rethrow;
     } catch (e) {
+      _logger.e('Verify OTP error: $e');
+      if (e.toString().contains('OTP') || e.toString().contains('token') || e.toString().contains('expired')) {
+        throw InvalidOtpException();
+      }
+      throw ServerException();
+    }
+  }
+
+  @override
+  Future<void> sendOtp(String email) async {
+    try {
+      await _supabaseClient.auth.signInWithOtp(
+        email: email,
+        shouldCreateUser: false,
+      );
+    } catch (e) {
+      _logger.e('Send OTP error: $e');
       throw ServerException();
     }
   }

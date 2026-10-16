@@ -5,7 +5,6 @@ import 'package:notion_app/core/error/exceptions.dart';
 import 'package:notion_app/core/error/failure.dart';
 import 'package:notion_app/feature/auth/data/datasources/auth_local_datasource.dart';
 import 'package:notion_app/feature/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:notion_app/feature/auth/data/model/login_model.dart';
 import 'package:notion_app/feature/auth/data/model/register_model.dart';
 import 'package:notion_app/feature/auth/domain/entities/user_entity.dart';
 import 'package:notion_app/feature/auth/domain/repositories/auth_repository.dart';
@@ -29,24 +28,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(user);
     } catch (e) {
       return Left(CacheFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, UserEntity>> login(LoginParams params) async {
-    try {
-      final model = LoginModel(
-        email: params.email,
-        password: params.password,
-      );
-
-      final result = await _authRemoteDataSource.login(model);
-
-      return Right(result);
-    } on AuthException {
-      return Left(CredentialFailure());
-    } on ServerException {
-      return Left(ServerFailure());
     }
   }
 
@@ -80,6 +61,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, void>> sendOtp(String email) async {
+    try {
+      await _authRemoteDataSource.sendOtp(email);
+      return const Right(null);
+    } on ServerException {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, UserEntity>> verifyOtp(VerifyOtpParams params) async {
     try {
       final result = await _authRemoteDataSource.verifyOtp(
@@ -90,6 +81,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await _saveUserSession(result);
 
       return Right(result);
+    } on InvalidOtpException {
+      return Left(InvalidOtpFailure());
     } on ServerException {
       return Left(ServerFailure());
     }

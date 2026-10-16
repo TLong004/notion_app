@@ -7,3 +7,5 @@ class AuthException implements Exception {}
 class EmptyException implements Exception {}
 
 class DuplicateEmailException implements Exception {}
+
+class InvalidOtpException implements Exception {}

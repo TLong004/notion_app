@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notion_app/core/error/failure.dart';
 import 'package:notion_app/core/usecase/use_case.dart';
 import 'package:notion_app/feature/auth/domain/usecases/check_signin_status_usecase.dart';
-import 'package:notion_app/feature/auth/domain/usecases/login_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/logout_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/register_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/send_otp_usercase.dart';
@@ -12,7 +11,6 @@ import 'package:notion_app/feature/auth/presentation/bloc/auth_event.dart';
 import 'package:notion_app/feature/auth/presentation/bloc/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthLoginUseCase _loginUseCase;
   final AuthRegisterUseCase _registerUseCase;
   final AuthLogoutUseCase _logoutUseCase;
   final AuthCheckSignInStatusUseCase _checkSignInStatusUseCase;
@@ -20,38 +18,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final VerifyOtpUseCase _verifyOtpUseCase;
 
   AuthBloc({
-    required AuthLoginUseCase loginUseCase,
     required AuthRegisterUseCase registerUseCase,
     required AuthLogoutUseCase logoutUseCase,
     required AuthCheckSignInStatusUseCase checkSignInStatusUseCase,
     required SendOtpUseCase sendOtpUseCase,
     required VerifyOtpUseCase verifyOtpUseCase,
-  })  : _loginUseCase = loginUseCase,
-        _registerUseCase = registerUseCase,
+  })  : _registerUseCase = registerUseCase,
         _logoutUseCase = logoutUseCase,
         _checkSignInStatusUseCase = checkSignInStatusUseCase,
         _sendOtpUseCase = sendOtpUseCase,
         _verifyOtpUseCase = verifyOtpUseCase,
         super(const AuthInitial()) {
-    on<LoginEvent>(_onLoginEvent);
     on<RegisterEvent>(_onRegisterEvent);
     on<LogoutEvent>(_onLogoutEvent);
     on<CheckSignInStatusEvent>(_onCheckSignInStatusEvent);
     on<SendOtpEvent>(_onSendOtpEvent);
     on<VerifyOtpEvent>(_onVerifyOtpEvent);
-  }
-
-  Future<void> _onLoginEvent(LoginEvent event, Emitter<AuthState> emit) async {
-    emit(const AuthLoading());
-    final result = await _loginUseCase(
-      LoginParams(email: event.email, password: event.password),
-    );
-    result.fold(
-      (failure) => emit(AuthFailure(_getFailureMessage(failure))),
-      (user) {
-        emit(AuthSuccess(user));
-      },
-    );
   }
 
   Future<void> _onRegisterEvent(
@@ -91,7 +73,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     final result = await _checkSignInStatusUseCase(NoParams());
     result.fold(
-      (failure) => emit(AuthFailure(_getFailureMessage(failure))),
+      (failure) {
+        if (failure is CacheFailure) {
+          emit(const AuthLoggedOut());
+        } else {
+          emit(AuthFailure(_getFailureMessage(failure)));
+        }
+      },
       (user) => emit(AuthSuccess(user)),
     );
   }
@@ -134,6 +122,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ServerFailure() => 'Lỗi máy chủ, vui lòng thử lại',
       CacheFailure() => 'Lỗi lưu trữ, vui lòng thử lại',
       EmptyFailure() => 'Dữ liệu trống, vui lòng thử lại',
+      InvalidOtpFailure() => 'Mã không đúng hoặc đã hết hạn. Vui lòng nhập lại hoặc gửi mã mới',
     };
   }
 }

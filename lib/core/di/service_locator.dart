@@ -8,7 +8,6 @@ import 'package:notion_app/feature/auth/data/datasources/auth_remote_datasource.
 import 'package:notion_app/feature/auth/data/repositories/auth_repository_impl.dart';
 import 'package:notion_app/feature/auth/domain/repositories/auth_repository.dart';
 import 'package:notion_app/feature/auth/domain/usecases/check_signin_status_usecase.dart';
-import 'package:notion_app/feature/auth/domain/usecases/login_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/logout_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/register_usecase.dart';
 import 'package:notion_app/feature/auth/domain/usecases/send_otp_usercase.dart';
@@ -37,6 +36,7 @@ Future<void> setupServiceLocator() async {
     AuthLocalDataSourceImpl(
       getIt<SecureLocalStorage>(),
       getIt<HiveLocalStorage>(),
+      supabaseClient,
     ),
   );
 
@@ -51,9 +51,6 @@ Future<void> setupServiceLocator() async {
   );
 
   // Use cases
-  getIt.registerSingleton<AuthLoginUseCase>(
-    AuthLoginUseCase(getIt<AuthRepository>()),
-  );
   getIt.registerSingleton<AuthRegisterUseCase>(
     AuthRegisterUseCase(getIt<AuthRepository>()),
   );
@@ -64,7 +61,7 @@ Future<void> setupServiceLocator() async {
     AuthCheckSignInStatusUseCase(getIt<AuthRepository>()),
   );
   getIt.registerSingleton<SendOtpUseCase>(
-    SendOtpUseCase(),
+    SendOtpUseCase(getIt<AuthRepository>()),
   );
   getIt.registerSingleton<VerifyOtpUseCase>(
     VerifyOtpUseCase(getIt<AuthRepository>()),
@@ -73,7 +70,6 @@ Future<void> setupServiceLocator() async {
   // BLoCs
   getIt.registerSingleton<AuthBloc>(
     AuthBloc(
-      loginUseCase: getIt<AuthLoginUseCase>(),
       registerUseCase: getIt<AuthRegisterUseCase>(),
       logoutUseCase: getIt<AuthLogoutUseCase>(),
       checkSignInStatusUseCase: getIt<AuthCheckSignInStatusUseCase>(),

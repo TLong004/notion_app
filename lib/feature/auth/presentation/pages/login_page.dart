@@ -45,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (_, _) => ModalRoute.of(context)?.isCurrent ?? false,
         listener: (context, state) {
           if (state is AuthSuccess) {
             Navigator.of(context).pushNamedAndRemoveUntil(
